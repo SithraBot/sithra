@@ -28,37 +28,24 @@ data class MessageEvent(
     override val self_id: Long,
     val message: List<MessageNode>,
     val raw_message: String,
-    val user_id: Long,
-    val group_id: Long?,
-) : Event() {
+    override val user_id: Long,
+    override val group_id: Long?,
+) : Event(), Proven {
     override val post_type: String = "message"
 
-    val isPrivate
-        get() = group_id == null
-
-    val isGroup
-        get() = group_id != null
-
-    val channelId
-        get() = if (group_id != null) {
-            GroupId(group_id)
-        } else {
-            PrivateId(user_id)
-        }
-
-    suspend fun replay(message: List<MessageNode>, session: ClientWebSocketSession) {
+    suspend fun ClientWebSocketSession.reply(message: List<MessageNode>) {
         if (group_id != null) {
-            session.send(SendGroupMsg(group_id, message).json())
+            send(SendGroupMsg(group_id, message).json())
         } else {
-            session.send(SendPrivateMsg(user_id, message).json())
+            send(SendPrivateMsg(user_id, message).json())
         }
     }
 
-    suspend fun replay(message: String, session: ClientWebSocketSession) {
+    suspend fun ClientWebSocketSession.reply(message: String) {
         if (group_id != null) {
-            session.send(SendGroupMsg(group_id, messageBuilder { text(message) }).json())
+            send(SendGroupMsg(group_id, messageBuilder { text(message) }).json())
         } else {
-            session.send(SendPrivateMsg(user_id, messageBuilder { text(message) }).json())
+            send(SendPrivateMsg(user_id, messageBuilder { text(message) }).json())
         }
     }
 }

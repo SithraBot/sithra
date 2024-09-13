@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 val ktor_version: String by project
 val logback_version: String by project
 
@@ -44,4 +46,10 @@ tasks.jar {
 
 kotlin {
     jvmToolchain(17)
+}
+
+tasks.withType<KotlinCompile> {
+    compilerOptions {
+        // freeCompilerArgs.add("-parameters")
+    }
 }

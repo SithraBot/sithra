@@ -12,7 +12,7 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.channels.consumeEach
 import okio.source
 import top.ninnana.config.Config
-import top.ninnana.handle.EventHandleManager
+import top.ninnana.handle.EventListenerManager
 import top.ninnana.utils.decodeToEvent
 import java.io.File
 
@@ -34,7 +34,7 @@ suspend fun main() {
     }
 
     mainConfig.getPluginsInstance().forEach {
-        it.load()
+        it.onLoad()
     }
     client.ws(
         method = HttpMethod.Get,
@@ -59,7 +59,7 @@ suspend fun ClientWebSocketSession.listenEvents(frame: Frame) {
         is Frame.Text -> {
             val event = frame.readText().decodeToEvent()
             if (event != null) {
-                EventHandleManager.handleEvent(this, event)
+                EventListenerManager.callEvent(this, event)
             }
         }
 

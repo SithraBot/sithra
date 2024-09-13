@@ -29,7 +29,7 @@ data class Config(
     fun getPluginsInstance(): List<Plugin> {
         return plugins.map {
             val clazz = this::class.java.classLoader.loadClass(it)
-            clazz.kotlin.createInstance() as Plugin
+            clazz.kotlin.objectInstance as Plugin
         }
     }
 }
