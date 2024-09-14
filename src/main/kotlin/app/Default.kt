@@ -14,7 +14,7 @@ object Default : Plugin(), EventListener, ToolBox {
         registerTools()
     }
 
-    @Tool("Ban or unban users known to QQ")
+    @Tool("Ban or unban users known to QQ. High-risk operation.")
     @WithEvent
     suspend fun ban(
         session: ClientWebSocketSession,

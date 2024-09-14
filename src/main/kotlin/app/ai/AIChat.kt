@@ -31,42 +31,44 @@ object AIChat : Plugin(), EventListener {
         logging = LoggingConfig(logger = Logger.Empty),
     )
 
+    suspend fun chat(messages: List<ChatMessage>): ChatCompletion {
+        return openai.chatCompletion(
+            ChatCompletionRequest(
+                model = ModelId(mainConfig.openai.model),
+                temperature = 0.8,
+                maxTokens = 2000,
+                messages = messages,
+                tools = Tools.vTools.map {
+                    Tool(ToolType.Function, it)
+                },
+                responseFormat = ChatResponseFormat.JsonObject
+            )
+        )
+    }
+
     @Subscribe
     suspend fun ClientWebSocketSession.messageVisitor(event: MessageEvent) {
         if (event.message.any { it.type == "at" && it.data.qq == mainConfig.onebot.selfId }) {
-            val messageContent = event.message.filter { it.type == "text" }.joinToString { it.data.text ?: "" }
+            val messageContent = event.message.joinToString { it.data.text ?: it.data.qq?.toString() ?: "" }
             val currentMessageChain = messageChain.getOrPut(event.channelId.id) {
                 mutableListOf(
-//                    ChatMessage(
-//                        role = ChatRole.System,
-//                        content = "你是群管理员。"
-//                    )
-                )
-            }
-            currentMessageChain.add(ChatMessage(role = ChatRole.User, content = messageContent))
-            suspend fun chat(messages: List<ChatMessage>): ChatCompletion {
-                return openai.chatCompletion(
-                    ChatCompletionRequest(
-                        model = ModelId(mainConfig.openai.model),
-                        temperature = 0.8,
-                        maxTokens = 2000,
-                        messages = messages,
-                        tools = Tools.vTools.map {
-                            Tool(ToolType.Function, it)
-                        }
+                    ChatMessage(
+                        role = ChatRole.System,
+                        content = "你是群管理员，执行高危操作前请先向用户确认再进行。你的QQ为${mainConfig.onebot.selfId}，用户的消息总是会包含你的QQ号，请无视。"
                     )
                 )
             }
-
+            currentMessageChain.add(ChatMessage(role = ChatRole.User, content = messageContent))
             var assistMessage: ChatMessage = chat(currentMessageChain).choices.firstOrNull()?.message ?: return
-            val toolCalls = assistMessage.toolCalls
-            if (toolCalls != null) {
+            var toolCalls = assistMessage.toolCalls
+            while (toolCalls != null) {
                 val toolMessages: MutableList<ChatMessage> = mutableListOf(assistMessage)
                 toolCalls.forEach {
                     if (it is ToolCall.Function) {
                         val result = Tools.callTool(this, it, event) ?: "success"
                         toolMessages.add(
                             ChatMessage(
+                                name = "AAA",
                                 role = ChatRole.Tool,
                                 content = result,
                                 toolCallId = it.id
@@ -76,6 +78,7 @@ object AIChat : Plugin(), EventListener {
                 }
                 currentMessageChain.addAll(toolMessages)
                 assistMessage = chat(currentMessageChain).choices.firstOrNull()?.message ?: return
+                toolCalls = assistMessage.toolCalls
             }
             currentMessageChain.add(assistMessage)
             if (assistMessage.content?.isEmpty() == false) {
