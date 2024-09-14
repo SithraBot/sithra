@@ -9,6 +9,7 @@ import com.aallam.openai.client.OpenAI
 import com.aallam.openai.client.OpenAIHost
 import io.ktor.client.plugins.websocket.*
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.encodeToString
 import top.ninnana.plugin.Plugin
 import top.ninnana.bean.MessageEvent
 import top.ninnana.handle.EventListener
@@ -27,7 +28,7 @@ object AIChat : Plugin(), EventListener {
     val openai = OpenAI(
         token = mainConfig.openai.token,
         host = OpenAIHost(baseUrl = mainConfig.openai.baseUrl),
-        logging = LoggingConfig(logger = Logger.Empty)
+        logging = LoggingConfig(logger = Logger.Empty),
     )
 
     @Subscribe
@@ -36,10 +37,10 @@ object AIChat : Plugin(), EventListener {
             val messageContent = event.message.filter { it.type == "text" }.joinToString { it.data.text ?: "" }
             val currentMessageChain = messageChain.getOrPut(event.channelId.id) {
                 mutableListOf(
-                    ChatMessage(
-                        role = ChatRole.System,
-                        content = "你是QQ群聊管理员,请帮助用户管理群聊。"
-                    )
+//                    ChatMessage(
+//                        role = ChatRole.System,
+//                        content = "你是群管理员。"
+//                    )
                 )
             }
             currentMessageChain.add(ChatMessage(role = ChatRole.User, content = messageContent))
@@ -47,9 +48,8 @@ object AIChat : Plugin(), EventListener {
                 return openai.chatCompletion(
                     ChatCompletionRequest(
                         model = ModelId(mainConfig.openai.model),
-                        temperature = 0.1,
-                        topP = 1.0,
-                        maxTokens = 8000,
+                        temperature = 0.8,
+                        maxTokens = 2000,
                         messages = messages,
                         tools = Tools.vTools.map {
                             Tool(ToolType.Function, it)
@@ -58,29 +58,29 @@ object AIChat : Plugin(), EventListener {
                 )
             }
 
-            val response = chat(currentMessageChain)
-            var assistMessage = response.choices.firstOrNull()?.message
-            assistMessage?.toolCalls?.forEach {
-                if (it is ToolCall.Function) {
-                    val result = Tools.callTool(this, it, event) ?: "success"
-                    currentMessageChain.add(assistMessage!!)
-                    currentMessageChain.add(
-                        ChatMessage(
-                            role = ChatRole.Tool,
-                            content = result,
-                            toolCallId = it.id,
+            var assistMessage: ChatMessage = chat(currentMessageChain).choices.firstOrNull()?.message ?: return
+            val toolCalls = assistMessage.toolCalls
+            if (toolCalls != null) {
+                val toolMessages: MutableList<ChatMessage> = mutableListOf(assistMessage)
+                toolCalls.forEach {
+                    if (it is ToolCall.Function) {
+                        val result = Tools.callTool(this, it, event) ?: "success"
+                        toolMessages.add(
+                            ChatMessage(
+                                role = ChatRole.Tool,
+                                content = result,
+                                toolCallId = it.id
+                            )
                         )
-                    )
-                    val responseWithToolCall = chat(currentMessageChain)
-                    assistMessage = responseWithToolCall.choices.firstOrNull()?.message
-                }
-            }
-            if (assistMessage != null) {
-                currentMessageChain.add(assistMessage!!)
-                if (assistMessage!!.content != null) {
-                    event.run {
-                        reply(assistMessage!!.content!!)
                     }
+                }
+                currentMessageChain.addAll(toolMessages)
+                assistMessage = chat(currentMessageChain).choices.firstOrNull()?.message ?: return
+            }
+            currentMessageChain.add(assistMessage)
+            if (assistMessage.content?.isEmpty() == false) {
+                event.run {
+                    reply(assistMessage.content!!)
                 }
             }
         }

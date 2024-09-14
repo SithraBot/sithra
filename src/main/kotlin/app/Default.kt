@@ -14,19 +14,19 @@ object Default : Plugin(), EventListener, ToolBox {
         registerTools()
     }
 
-    @Tool("将已知QQ的用户禁言或取消禁言")
+    @Tool("Ban or unban users known to QQ")
     @WithEvent
     suspend fun ban(
         session: ClientWebSocketSession,
         event: Event?,
-        @Description("禁言时长(单位:秒),设置为0则取消禁言") duration: Int = 60,
-        @Description("被禁言人QQ号") id: Long,
+        @Description("The muting duration (unit: seconds), set to 0 to cancel the muting") duration: Int = 60,
+        @Description("QQ account of the banned person") id: Long,
     ): String {
         if (event is Proven && event.group_id != null) {
-            if (event.user_id != 3605331714L) return "没有权限"
+            if (event.user_id != 3605331714L) return "PERMISSION DENIED" // TODO: 鉴权
             session.send(SetGroupBan(event.group_id!!, id, duration))
-        } else return "不在群聊中"
-        return "成功禁言"
+        } else return "NOT IN GROUP CHAT"
+        return "OPERATION SUCCESSFUL"
     }
 
 
@@ -39,4 +39,3 @@ object Default : Plugin(), EventListener, ToolBox {
         }
     }
 }
-
