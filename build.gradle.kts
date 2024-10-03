@@ -40,7 +40,8 @@ tasks.test {
 
 tasks.jar {
     manifest {
-        attributes(mapOf("Main-Class" to "top.ninnana.MainKt"))
+        attributes("Main-Class" to "top.ninnana.MainKt")
+        attributes("Sithra", "Entry-Point" to "top.ninnana.MainKt")
     }
 }
 

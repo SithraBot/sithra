@@ -9,13 +9,11 @@ import com.aallam.openai.client.OpenAI
 import com.aallam.openai.client.OpenAIHost
 import io.ktor.client.plugins.websocket.*
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.encodeToString
 import top.ninnana.plugin.Plugin
 import top.ninnana.bean.MessageEvent
 import top.ninnana.handle.EventListener
 import top.ninnana.handle.Subscribe
 import top.ninnana.mainConfig
-import top.ninnana.utils.json
 
 object AIChat : Plugin(), EventListener {
     override fun onLoad() = runBlocking {

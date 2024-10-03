@@ -13,6 +13,7 @@ import kotlinx.coroutines.channels.consumeEach
 import okio.source
 import top.ninnana.config.Config
 import top.ninnana.handle.EventListenerManager
+import top.ninnana.loader.PluginLoader
 import top.ninnana.utils.decodeToEvent
 import java.io.File
 
@@ -32,9 +33,8 @@ suspend fun main() {
     loggingConfiguration {
         ANSI_CONSOLE()
     }
-
-    mainConfig.getPluginsInstance().forEach {
-        it.onLoad()
+    PluginLoader("./plugins").loadAll().forEach {
+        it.objectInstance?.onLoad()
     }
     client.ws(
         method = HttpMethod.Get,

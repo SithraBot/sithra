@@ -44,3 +44,7 @@ bin/
 config.yml
 
 .idea/
+
+.kotlin
+
+plugins
