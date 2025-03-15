@@ -1,37 +1,52 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.*
 
 val ktor_version: String by project
-val logback_version: String by project
+val project_version: String by project
 
 plugins {
-    kotlin("jvm") version "2.0.10"
-    kotlin("plugin.serialization") version "2.0.20"
+    kotlin("jvm") version "2.1.10"
+    kotlin("plugin.serialization") version "2.1.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     application
 }
 
-application {
-    mainClass = "top.ninnana.MainKt"
+val secrets: Properties by lazy {
+    project.rootProject.file("secrets.properties").reader().use {
+        Properties().apply { load(it) }
+    }
 }
 
-group = "top.ninnana"
-version = "1.0-SNAPSHOT"
+application {
+    mainClass = "org.sithra.sithrabot.MainKt"
+}
+
+group = "org.sithra.sithrabot"
+version = project_version
 
 repositories {
+    maven {
+        name = "GitHubPackages"
+        url = uri("https://maven.pkg.github.com/SithraBot/synthetic")
+        credentials {
+            username = System.getenv("GITHUB_USERNAME") ?: secrets.getProperty("github.username")!!
+            password = System.getenv("GITHUB_TOKEN") ?: secrets.getProperty("github.token")!!
+        }
+    }
     mavenCentral()
 }
 
 dependencies {
-    implementation("io.ktor:ktor-client-cio-jvm:2.3.12")
-    testImplementation(kotlin("test"))
+    implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.2")
-    implementation("io.ktor:ktor-client-core:$ktor_version")
-    implementation("io.ktor:ktor-client-websockets:$ktor_version")
-    implementation("io.ktor:ktor-client-cio:$ktor_version")
-    implementation("io.klogging:slf4j-klogging:0.7.2")
-    implementation("com.aallam.openai:openai-client:3.8.2")
-    implementation("com.charleskorn.kaml:kaml:0.61.0")
+    implementation("ch.qos.logback:logback-classic:1.5.17")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+    implementation("io.github.oshai:kotlin-logging-jvm:7.0.5")
+    implementation("org.sithra.synthetic:core:0.1.0-alpha")
+    implementation("org.sithra.synthetic:openai:0.1.0-alpha")
+    implementation("io.ktor:ktor-client-cio-jvm:$ktor_version")
+    implementation("com.charleskorn.kaml:kaml:0.72.0")
+    testImplementation(kotlin("test"))
 }
 
 tasks.test {
@@ -40,13 +55,15 @@ tasks.test {
 
 tasks.jar {
     manifest {
-        attributes("Main-Class" to "top.ninnana.MainKt")
-        attributes("Sithra", "Entry-Point" to "top.ninnana.MainKt")
+        attributes("Main-Class" to "org.sithra.sithrabot.MainKt")
     }
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
+    compilerOptions {
+        optIn.add("kotlin.uuid.ExperimentalUuidApi")
+    }
 }
 
 tasks.withType<KotlinCompile> {

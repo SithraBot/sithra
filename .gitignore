@@ -4,6 +4,9 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+### !!!secret!!! ###
+secrets.properties
+
 ### IntelliJ IDEA ###
 .idea/modules.xml
 .idea/jarRepositories.xml
@@ -48,3 +51,7 @@ config.yml
 .kotlin
 
 plugins
+
+### TestFile ###
+config.properties
+openai.yaml
