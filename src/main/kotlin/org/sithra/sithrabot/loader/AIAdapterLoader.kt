@@ -14,7 +14,7 @@ class AIAdapterLoader(clazz: String) {
             .loadClass(clazz).kotlin
         builderClass.createInstance() as AIAdapterBuilder<*> to builderClass.simpleName
     } catch (e: Exception) {
-        throw IllegalStateException("无法加载 AI 适配器构建器", e)
+        throw IllegalStateException("无法加载 AI 适配器构建器。", e)
     }
     private var innerAdapter: IAdapter? = null
     val adapter: IAdapter
@@ -39,7 +39,7 @@ class AIAdapterLoader(clazz: String) {
         } else {
             file.createNewFile()
             file.writeText(config)
-            logger.info { "请于 ./${builder.configFileName()} 中填写配置后再次启动" }
+            logger.info { "请于 ./${builder.configFileName()} 中填写配置后再次启动。" }
             exitProcess(0)
         }
         innerAdapter = builder.build(config)

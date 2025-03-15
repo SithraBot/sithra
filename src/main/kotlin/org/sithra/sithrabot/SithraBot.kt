@@ -1,7 +1,7 @@
 package org.sithra.sithrabot
 
 import org.sithra.synthetic.context.Context
-import io.github.oshai.kotlinlogging.KotlinLogging;
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.sithra.sithrabot.loader.AIAdapterLoader
 import org.sithra.sithrabot.config.BaseConfig
 import org.sithra.synthetic.store.casing.InMemoryMessagesStore
