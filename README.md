@@ -1,3 +1,5 @@
+The future of Sithra is: (sithra-rs)[https://github.com/SithraBot/sithra-rs]
+
 # Sithra
 
 OneBot AI ChatBot. Extensible AI chat operation framework.
