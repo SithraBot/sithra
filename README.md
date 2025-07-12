@@ -1,4 +1,4 @@
-The future of Sithra is: [sithra-rs](https://github.com/SithraBot/sithra-rs)
+# The future of Sithra is: [sithra-rs](https://github.com/SithraBot/sithra-rs)
 
 # Sithra
 
